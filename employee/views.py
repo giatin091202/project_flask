@@ -12,9 +12,10 @@ from PIL import Image
 from core.models import allowed_file, allowed_attachment_file
 from core.forms import DriveAPI
 from werkzeug.utils import secure_filename
-from __init__ import app
+from __init__ import app,file_path_default
 import os
 from config import Config
+from core.models import user_avatar
 
 employee = Blueprint("employee", __name__)
 
@@ -43,7 +44,13 @@ def employeepage(image_path,fullname):
 @login_required
 def informationuserjob(informationuserid,totp):
     global _informationuserjobid
+    found_avatar = user_avatar.find_picture_name_by_id(informationuserid)
+    if found_avatar and found_avatar[2] != "":
+        _image_path = found_avatar[2]
+    else:
+        _image_path = file_path_default
     if informationuserid==str(current_user.idinformationuser):
+
         form=Employeeinformation(request.form)
         conn=db.connection()
         cursor=conn.cursor()
@@ -328,7 +335,13 @@ def forexsalaryfunction(informationuserjobid,informationuserid):
 @login_required
 def employeerelativelist(informationuserid,totp):
     #print("id in ers is " + str(informationuserid))
+    found_avatar = user_avatar.find_picture_name_by_id(informationuserid)
+    if found_avatar and found_avatar[2] != "":
+        _image_path = found_avatar[2]
+    else:
+        _image_path = file_path_default
     if informationuserid==str(current_user.idinformationuser):
+        
         conn=db.connection()
         cursor=conn.cursor()
         sql="select * from employeeRelative where idinformationuser=?"

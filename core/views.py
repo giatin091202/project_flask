@@ -160,7 +160,7 @@ def userinformation(idaccount,totp):
         form = informationUserForm()
         conn=db.connection()
         cursor=conn.cursor()
-        sql="select * from informationUser where id_useraccount=?"
+        sql="select i.*,r.role_name from informationUser i join user_account u on u.id=i.id_useraccount join role_user r on r.id=u.role_id  where i.id_useraccount=?"
         value=(idaccount)
         cursor.execute(sql,value)
         user_temp=cursor.fetchone()
@@ -183,6 +183,9 @@ def userinformation(idaccount,totp):
                 _image_path = found_avatar[2]
             else:
                 _image_path = file_path_default
+            print("role admin is :" + _roleadmin)
+            if user_temp[13] == "admin":
+               _roleadmin = "admin" 
         return render_template("core/user_information.html", form=form, image_path = _image_path,image_path_admin=_image_path_admin,informationuserid =  user_temp[0],
                             fullname = user_temp[1], roleuser=_roleuser,roleadmin = _roleadmin ,idaccount=current_user.id,totp='None',fullname_admin = _fullname_admin)
     elif str(totp)==session.get('is_admin') and str(totp)!='None':
