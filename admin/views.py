@@ -19,15 +19,20 @@ import zipfile
 admin = Blueprint("admin", __name__)
 _role_user = ""
 _roleadmin = "admin"
-@admin.route('/adminpage')
+_image_path_admin = ""
+_fullname_admin = ""
+@admin.route('/adminpage/<image_path_admin>/<fullname_admin>')
 @login_required
-def adminpage():
-    
-    return render_template("admin/adminpage.html",image_path=file_path_default,roleuser=_role_user,roleadmin = _roleadmin)
+def adminpage(image_path_admin, fullname_admin):
+    global _image_path_admin,_fullname_admin
+    _image_path_admin=image_path_admin
+    _fullname_admin = fullname_admin
+    print("admin fullname is " + _fullname_admin)
+    return render_template("admin/adminpage.html",image_path_admin=_image_path_admin,roleuser=_role_user,roleadmin = _roleadmin,fullname_admin=fullname_admin)
 
 @admin.route('/adminpage/roles',methods=["GET", "POST"])
 def displayRoles():
-    
+    global _image_path_admin
     conn=db.connection()
     cursor=conn.cursor()
     sql="select * from role_user"
@@ -46,7 +51,7 @@ def displayRoles():
         conn.close()
         return redirect(url_for("admin.displayRoles"))
     role_names = [(role[0],role[1]) for role in role_user]
-    return render_template("admin/manageRole.html",data=role_names,form=form,image_path=file_path_default,roleuser=session.get('roleuser'))
+    return render_template("admin/manageRole.html",data=role_names,form=form,image_path_admin=_image_path_admin,roleadmin=_roleadmin,fullname_admin =  _fullname_admin)
 
 @admin.route("/adminpage/updatepage/<idrole>",methods=["GET", "POST"])
 def rolepage(idrole):
@@ -68,7 +73,7 @@ def rolepage(idrole):
         conn.commit()
         conn.close()
         return redirect(url_for("admin.displayRoles"))
-    return render_template("admin/updatepagerole.html",rolename=rolename[0],idrole=idrole,image_path=file_path_default,roleuser=session.get('roleuser'))
+    return render_template("admin/updatepagerole.html",rolename=rolename[0],idrole=idrole,image_path_admin=_image_path_admin,roleadmin=_roleadmin,fullname_admin =  _fullname_admin)
 @admin.route("/adminpage/deleterole/<idrole>")
 def deleterole(idrole):
     conn=db.connection()
@@ -84,6 +89,8 @@ def deleterole(idrole):
 @admin.route("/adminpage/usersmanager",methods=["GET", "POST"])
 def displayusers():  
     #list account
+    print("image path admin is:")
+    print(_image_path_admin) 
     totp=pyotp.TOTP('adminroles')
     totp=totp.now()
     session['is_admin']=str(totp)
@@ -234,7 +241,7 @@ def displayusers():
             return response
         #return redirect(url_for("admin.exportfilepdf"))
     return render_template("admin/manageusers.html",Alluser=Alluser,usersrole=usersrole,usersblock=usersblock,
-                           roletype=roles,table=table,selecttionitem=selecttionitem,image_path=file_path_default,totp=totp,roleuser=session.get('roleuser'))
+                           roletype=roles,table=table,selecttionitem=selecttionitem,image_path_admin=_image_path_admin,totp=totp,roleadmin=_roleadmin,fullname_admin =  _fullname_admin)
 
 def is_all_null(array):
     for e in array:
@@ -300,7 +307,7 @@ def assignrole(idaccount,userrole):
             conn.close()
             return redirect(url_for("admin.displayusers"))
     #return userrole
-    return render_template("admin/updatepageuserrole.html",roles=roles,email=email[0],idaccount=idaccount,roleuser=session.get('roleuser'),userrole=userrole,informationuserid=idinformationuser)
+    return render_template("admin/updatepageuserrole.html",roles=roles,email=email[0],idaccount=idaccount,roleadmin=_roleadmin,fullname_admin =  _fullname_admin,userrole=userrole,informationuserid=idinformationuser)
 
 @admin.route('/adminpage/usersmanager/blockuser/<idaccount>')
 def blockaccount(idaccount):
@@ -576,11 +583,11 @@ def createemployeeinfor(idinformation):
             forex=cursor.fetchone()  
             conn.close()
             if forex is None:
-                return redirect(url_for('admin.createforexsalary',idinformation=idinformation,image_path=file_path_default,roleuser=_role_user,roleadmin = _roleadmin)) 
+                return redirect(url_for('admin.createforexsalary',idinformation=idinformation,image_path_admin=_image_path_admin,roleuser=_role_user,roleadmin = _roleadmin)) 
             else:
                 flash('information job employee is exist')
                 return redirect(url_for('admin.displayusers'))
-    return render_template("admin/admininformationuser.html",userjob=userjob,informationuserid=idinformation,form=form,companysitecode=companysitecode,roleuser=session.get('roleuser'))
+    return render_template("admin/admininformationuser.html",userjob=userjob,informationuserid=idinformation,form=form,companysitecode=companysitecode,roleadmin=_roleadmin,fullname_admin =  _fullname_admin)
                             #,image_path=_image_path,Employeerelative=Employeerelative,temp1=temp1,temp2=temp2,temp3=temp3,temp4=temp4,temp5=temp5)    
     
 @admin.route('/adminpage/usersmanager/createlaborcontract/<idinformation>',methods=['GET','POST'])
@@ -608,7 +615,7 @@ def createlaborcontract(idinformation):
         conn.commit()
         conn.close()
         return redirect(url_for('admin.createforexsalary',idinformation=idinformation))
-    return render_template('admin/adminlaborcontract.html',informationuserid=idinformation,form=form,image_path=file_path_default,roleuser=session.get('roleuser'))
+    return render_template('admin/adminlaborcontract.html',informationuserid=idinformation,form=form,image_path_admin=_image_path_admin,roleadmin=_roleadmin,fullname_admin =  _fullname_admin)
 
 @admin.route('/adminpage/usersmanager/createforexsalary/<idinformation>',methods=['GET','POST'])
 def createforexsalary(idinformation):
@@ -650,7 +657,7 @@ def createforexsalary(idinformation):
         conn.close()
         flash('create information job employee is successful')
         return redirect(url_for('admin.displayusers'))
-    return render_template('admin/adminforexsalary.html',idinformation=idinformation,form=form,image_path=file_path_default,roleuser=session.get('roleuser'))
+    return render_template('admin/adminforexsalary.html',idinformation=idinformation,form=form,image_path_admin=_image_path_admin,roleadmin=_roleadmin,fullname_admin =  _fullname_admin)
 
 @admin.route('/adminpage/groupuserpage',methods=['GET','POST'])
 def groupuserpage():
@@ -679,7 +686,7 @@ def groupuserpage():
         conn.commit()
         conn.close()
         return redirect(url_for("admin.updategropuser",idgroup=idgrouptemp[0],rolegroup='admin'))
-    return render_template('admin/groupuserpage.html',groups=groups,image_path=file_path_default,roleuser=session.get('roleuser'),form=form,rolegroup='admin')
+    return render_template('admin/groupuserpage.html',groups=groups,image_path_admin=_image_path_admin,roleadmin=_roleadmin,fullname_admin =  _fullname_admin,form=form,rolegroup='admin')
 
 
 @admin.route('/adminpage/groupuserpage/updategroupuser/<idgroup>/<rolegroup>',methods=['GET','POST'])
@@ -818,7 +825,7 @@ def updategropuser(idgroup,rolegroup):
     totp=totp.now()
     session['is_admin']=str(totp)
 
-    return render_template('admin/updategroupuser.html',idgroup=idgroup,image_path=file_path_default,roleuser=session.get('roleuser')
+    return render_template('admin/updategroupuser.html',idgroup=idgroup,image_path_admin=_image_path_admin,roleadmin=_roleadmin,fullname_admin =  _fullname_admin
                            ,usersSelect=usersSelect,grouprole=grouprole,users=users,rolegroup=rolegroup,totp=str(totp),form=form)
 
 @admin.route('/adminpage/groupuserpage/updategroupuser/deletegroupuser/<idgroup>',methods=['GET','POST'])

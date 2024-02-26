@@ -32,6 +32,7 @@ core_bp = Blueprint("core", __name__)
 _front_cccd= ''
 _back_cccd= ''
 _image_path = ""#avatar default
+
 _front_healthyInsurance = ""
 _back_healthyInsurance =""
 _driver_file_url = ""
@@ -39,10 +40,12 @@ _attachedFileName = ""
 _fullname =""
 _roleuser = ""
 _roleadmin = ""
+_image_path_admin = ""
+_fullname_admin = ""
 
 @login_required
 def authorizationUser():
-    global _image_path,_fullname,_roleuser
+    global _image_path,_fullname,_roleuser,_image_path_admin 
     conn=db.connection()
     cursor=conn.cursor()
     sql="select role_name from role_user where id=?"
@@ -103,7 +106,11 @@ def authorizationUser():
         # _image_path = "url_for('static',filename='source/avatar_admin.jpg')"
         _roleadmin = "admin"
         _roleuser = ""
-        return redirect(url_for("admin.adminpage",image_path = _image_path,fullname = _fullname,roleadmin = _roleadmin))
+        _image_path_admin = _image_path
+
+        _fullname_admin = _fullname
+        _fullname = ""
+        return redirect(url_for("admin.adminpage",image_path_admin=_image_path_admin,fullname_admin = _fullname_admin,roleadmin = _roleadmin))
         
     else:
         return "You have not been granted access to the resource"
@@ -171,9 +178,13 @@ def userinformation(idaccount,totp):
             form.Maritalstatus.data=user_temp[10]
             form.Ethnicgroup.data=user_temp[11]
             form.Religion.data=user_temp[12]
-
-        return render_template("core/user_information.html", form=form, image_path = _image_path,informationuserid =  user_temp[0],
-                            fullname = user_temp[1], roleuser=_roleuser,roleadmin = _roleadmin ,idaccount=current_user.id,totp='None')
+            found_avatar = user_avatar.find_picture_name_by_id(user_temp[0])
+            if found_avatar and found_avatar[2] != "":
+                _image_path = found_avatar[2]
+            else:
+                _image_path = file_path_default
+        return render_template("core/user_information.html", form=form, image_path = _image_path,image_path_admin=_image_path_admin,informationuserid =  user_temp[0],
+                            fullname = user_temp[1], roleuser=_roleuser,roleadmin = _roleadmin ,idaccount=current_user.id,totp='None',fullname_admin = _fullname_admin)
     elif str(totp)==session.get('is_admin') and str(totp)!='None':
         # conn=db.connection()
         # cursor=conn.cursor()
@@ -213,8 +224,8 @@ def userinformation(idaccount,totp):
                 _image_path = file_path_default
 
         
-        return render_template("core/user_information.html", form=form, image_path = _image_path,informationuserid =  user_temp[0],
-                            fullname = user_temp[1], roleuser=_roleuser,roleadmin = _roleadmin,idaccount=idaccount,totp=totp)
+        return render_template("core/user_information.html", form=form, image_path = _image_path,image_path_admin=_image_path_admin,informationuserid =  user_temp[0],
+                            fullname = user_temp[1], roleuser=_roleuser,roleadmin = _roleadmin,idaccount=idaccount,totp=totp,fullname_admin = _fullname_admin)
     else:
         flash("You are logging in illegally")
         return redirect(url_for("authentication.logout"))
@@ -255,7 +266,7 @@ def latestEmployment(informationuserid,totp):
             form.StartDate.data = user_temp[8]
             form.EndDate.data=user_temp[9]
             return render_template("core/latestEmployment.html", form=form,
-                image_path = _image_path,fullname=_fullname,informationuserid=informationuserid,
+                image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin,informationuserid=informationuserid,
                  roleuser=_roleuser,roleadmin = _roleadmin,totp='None',idaccount=current_user.id,readrights=session.get('readrights'))
     elif str(totp)==session.get('is_admin'):
         #global _image_path,_fullname,_roleuser
@@ -279,7 +290,7 @@ def latestEmployment(informationuserid,totp):
             form.StartDate.data = user_temp[8]
             form.EndDate.data=user_temp[9]
             return render_template("core/latestEmployment.html", form=form,
-                image_path = _image_path,fullname=_fullname,informationuserid=informationuserid,
+                image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin,informationuserid=informationuserid,
                   roleuser=_roleuser,roleadmin = _roleadmin,totp=totp,idaccount=session.get('idaccountadminmanager'),readrights=4)
     else:
         flash("You are logging in illegally")
@@ -333,7 +344,7 @@ def usercccd(informationuserid,totp):
             _back_cccd = ""
         print("front image is: "+ _front_cccd)
         print("back image is: "+ _front_cccd)
-        return render_template("core/user_cccd.html", form=form, image_path = _image_path,fullname=_fullname,
+        return render_template("core/user_cccd.html", form=form, image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin,
                            informationuserid=informationuserid,front_cccd =_front_cccd,back_cccd =_back_cccd, roleuser=_roleuser,roleadmin = _roleadmin ,totp='None'
                            ,idaccount=current_user.id,readrights=session.get('readrights'))
     elif str(totp)==session.get('is_admin'):
@@ -370,7 +381,7 @@ def usercccd(informationuserid,totp):
             _back_cccd = ""
         print("front image is: "+ _front_cccd)
         print("back image is: "+ _front_cccd)
-        return render_template("core/user_cccd.html", form=form, image_path = _image_path,fullname=_fullname,
+        return render_template("core/user_cccd.html", form=form, image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin,
                            informationuserid=informationuserid,front_cccd =_front_cccd,back_cccd =_back_cccd,
                              roleuser=_roleuser,roleadmin = _roleadmin ,totp=totp,idaccount=session.get('idaccountadminmanager'),readrights=4)
     else:
@@ -390,7 +401,7 @@ def uploadCCCD(informationuserid):
         # Check if the file is empty
         if file_front.filename == '' and file_back.filename == '':
             flash('No selected file')
-            return redirect(url_for('core.usercccd', informationuserid=informationuserid, fullname=_fullname, roleuser=_roleuser,roleadmin = _roleadmin))
+            return redirect(url_for('core.usercccd', informationuserid=informationuserid, fullname=_fullname,fullname_admin = _fullname_admin, roleuser=_roleuser,roleadmin = _roleadmin))
 
         # Check if the file has an allowed extension
         if  allowed_file(file_front.filename) or allowed_file(file_back.filename):
@@ -420,14 +431,14 @@ def uploadCCCD(informationuserid):
 
             if found_cccd:
                 user_cccd.update_pic_name(informationuserid,file_front.filename,file_back.filename)
-                return redirect(url_for('core.usercccd', informationuserid=informationuserid, fullname=_fullname, roleuser=_roleuser,roleadmin = _roleadmin))
+                return redirect(url_for('core.usercccd', informationuserid=informationuserid, fullname=_fullname,fullname_admin = _fullname_admin, roleuser=_roleuser,roleadmin = _roleadmin))
             else:
                 new_cccd = user_cccd(informationuserid = informationuserid, front_pic_name= file_front.filename,back_pic_name= file_back.filename)
                 id_pic = new_cccd.save()
             
             _front_cccd = file_front.filename
             _back_cccd = file_back.filename
-            return redirect(url_for('core.extractCCCD', informationuserid=informationuserid, fullname=_fullname, roleuser=_roleuser,roleadmin = _roleadmin))
+            return redirect(url_for('core.extractCCCD', informationuserid=informationuserid, fullname=_fullname,fullname_admin = _fullname_admin, roleuser=_roleuser,roleadmin = _roleadmin))
         else:
             flash('Allowed media types are - png, jpg, jpeg, gif')
             return redirect(url_for('core.home'))
@@ -450,7 +461,7 @@ def extractCCCD(informationuserid):
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
     text = pytesseract.image_to_string(img, lang='vie')
     print(text)
-    return redirect(url_for('core.usercccd', informationuserid=informationuserid, fullname=_fullname, roleuser=_roleuser,roleadmin = _roleadmin))
+    return redirect(url_for('core.usercccd', informationuserid=informationuserid, fullname=_fullname,fullname_admin = _fullname_admin, roleuser=_roleuser,roleadmin = _roleadmin))
 
 # upload Healthy Insurance image
 @core_bp.route('/upload_healthyInsurance/<informationuserid>', methods=['POST', 'get'])
@@ -641,7 +652,7 @@ def edit_latestEmployment(col,informationuserid):
         cursor.commit()
         cursor.close()
         print("123456")
-        return redirect(url_for('core.latestEmployment', informationuserid=informationuserid, fullname=_fullname))
+        return redirect(url_for('core.latestEmployment', informationuserid=informationuserid, fullname=_fullname,fullname_admin = _fullname_admin))
     else:
         flash("You are logging in illegally")
         return redirect(url_for("authentication.logout"))
@@ -668,7 +679,7 @@ def edit_informationcccd(col,informationuserid):
         cursor.commit()
         cursor.close()
 
-        return redirect(url_for('core.usercccd', informationuserid=informationuserid, fullname=_fullname, roleuser=_roleuser,roleadmin = _roleadmin))
+        return redirect(url_for('core.usercccd', informationuserid=informationuserid, fullname=_fullname,fullname_admin = _fullname_admin, roleuser=_roleuser,roleadmin = _roleadmin))
     else:
         flash("You are logging in illegally")
         return redirect(url_for("authentication.logout"))
@@ -815,7 +826,7 @@ def healthCheckCertificates(informationuserid,totp):
             df = pd.concat([df,df2])
         conn.close()    
         return render_template("core/healthCheckCertificates.html",
-                            image_path = _image_path,fullname=_fullname,
+                            image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin,
                             informationuserid=informationuserid, temp = temp,
                               roleuser=_roleuser,roleadmin = _roleadmin,totp=totp,idaccount=current_user.id,
                               readrights=session.get('readrights'))
@@ -831,7 +842,7 @@ def healthCheckCertificates(informationuserid,totp):
             df = pd.concat([df,df2])
         conn.close()    
         return render_template("core/healthCheckCertificates.html",
-                            image_path = _image_path,fullname=_fullname,
+                            image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin,
                             informationuserid=informationuserid, temp = temp,
                               roleuser=_roleuser,roleadmin = _roleadmin,totp=totp,
                               idaccount=session.get('idaccountadminmanager'),readrights=4)
@@ -953,7 +964,7 @@ def educationbackground(informationuserid,totp):
             df = pd.concat([df,df2])
         conn.close()   
         return render_template("core/educationbackground.html",
-                            image_path = _image_path,fullname=_fullname
+                            image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin
                             ,informationuserid=informationuserid,
                               temp = temp, roleuser=_roleuser,roleadmin = _roleadmin,totp='None',
                               idaccount=current_user.id,readrights=session.get('readrights'))
@@ -969,7 +980,7 @@ def educationbackground(informationuserid,totp):
             df = pd.concat([df,df2])
         conn.close()    
         return render_template("core/educationbackground.html",
-                            image_path = _image_path,fullname=_fullname,
+                            image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin,
                             informationuserid=informationuserid, temp = temp, 
                             roleuser=_roleuser,roleadmin = _roleadmin,totp=totp,
                             idaccount=session.get('idaccountadminmanager'),readrights=4)
@@ -1080,7 +1091,7 @@ def qualification(informationuserid,totp):
             df = pd.concat([df,df2])
         conn.close()    
         return render_template("core/qualification.html",
-                            image_path = _image_path,fullname=_fullname,
+                            image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin,
                             informationuserid=informationuserid, temp = temp,
                               roleuser=_roleuser,roleadmin = _roleadmin,idaccount=current_user.id,totp='None',readrights=session.get('readrights'))
     elif str(totp)==session.get('is_admin'):
@@ -1095,7 +1106,7 @@ def qualification(informationuserid,totp):
             df = pd.concat([df,df2])
         conn.close()    
         return render_template("core/qualification.html",
-                            image_path = _image_path,fullname=_fullname,informationuserid=informationuserid,
+                            image_path = _image_path,image_path_admin=_image_path_admin,fullname=_fullname,fullname_admin = _fullname_admin,informationuserid=informationuserid,
                               temp = temp, roleuser=_roleuser,roleadmin = _roleadmin,totp=totp,
                               idaccount=session.get('idaccountadminmanager'),readrights=4)
     else:
